@@ -1,36 +1,224 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Getting Started
+# How To Implement Light/Dark mode in Next Js 
 
-First, run the development server:
+This is a brief tutorial on how to implement dark & light mode in next.Js
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+special thanks to [developerAromal](https://github.com/DeveloperAromal)
+
+## Prerequisites
+
+* next-themes
+* next js project
+* lucide-react icons (only if you're using sun/moon toggle icons)
+
+## Steps
+
+1. Create a new Next Js project using the command
+
+```sh
+npx create-next-app@latest
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Inside the project folder, install next-theme and lucide-react (it's for creating the Moon/Sun Icon)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```sh
+npm i next-themes
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+install lucide-react, if you want to show sun & moon icon
+```sh
+npm i lucide-react
+```
 
-## Learn More
+3. Create a folder inside app directory named `components` inside components, create two folders `ui` and `includes`. Inside `ui` goes the files : `theme-provider.tsx` & `theme-switcher.tsx`. Inside `includes` we create a `Navbar.tsx` component, ( for putting the light/dark mode toggle )
 
-To learn more about Next.js, take a look at the following resources:
+the folder structure should look like this:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+/app
+└── /components
+    ├── /ui
+    │   ├── theme-provider.tsx 
+    │   └── theme-switcher.tsx 
+    └── /includes
+        └── navbar.tsx
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+4. Inside `theme-provider.tsx` put this code:
 
-## Deploy on Vercel
+```tsx
+"use client";
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+import * as React from "react";
+import { ThemeProvider as NextThemesProvider } from "next-themes";
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+export function ThemeProvider({
+  children,
+  ...props
+}: React.ComponentProps<typeof NextThemesProvider>) {
+  return <NextThemesProvider {...props}>{children}</NextThemesProvider>;
+}
+
+```
+
+5. Inside `theme-switcher.tsx` put this code:
+
+```tsx
+"use client";
+
+import { Moon, Sun } from "lucide-react";
+import { useTheme } from "next-themes";
+
+export const ThemeSwitcher = () => {
+  const { setTheme } = useTheme();
+
+  return (
+    <main className="flex gap-6">
+      <button onClick={() => setTheme("light")}>light</button>
+      <button onClick={() => setTheme("dark")}>dark</button>
+    </main>
+  );
+};
+
+```
+
+you can see that, inside `theme-switcher.tsx` comes the toggle functionality, so what you can do is you can put the lucide react icons for sun and moon respectively in the code, to show both icons. Or as you wish ( your creativity !)
+
+6. Now call this `theme-switcher.tsx` in you `Navbar.tsx` :
+
+```tsx
+"use client";
+
+import { ThemeSwitcher } from "../ui/theme-switcher";
+
+export default function Navbar() {
+  return (
+    <header className="bg-white dark:bg-black">
+      <ThemeSwitcher />
+    </header>
+  );
+}
+
+```
+
+I've implemented a simple navbar, you can create a big one as you wish
+
+nb:- the tailwind class on header tag
+
+7. Now inside `globals.css` : 
+
+```css
+@import "tailwindcss";
+@custom-variant dark (&:is(.dark *));
+
+body {
+  @apply bg-white text-black dark:bg-black dark:text-white;
+}
+
+```
+
+so what it basically does is the body gets white bg and black text (in light mode) and black bg and white text (in dark mode)
+
+Since tailwind css is also used, you can do the following also :
+
+```tsx
+<div className="bg-white dark:bg-blue-700">
+    <h1>Hello world </h1>
+</div>
+```
+
+8. All this won't work until you do the following thing, that is:
+
+```tsx
+import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
+import "./globals.css";
+
+// add this 
+import { ThemeProvider } from "./components/ui/theme-provider";
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+export const metadata: Metadata = {
+  title: "Create Next App",
+  description: "Generated by create next app",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html
+      lang="en"
+      className="light"
+      style={{ colorScheme: "light" }}
+      suppressHydrationWarning
+    >
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
+      </body>
+    </html>
+  );
+}
+
+```
+you need to wrap the children in the `layout.tsx` inside `ThemeProvider` and also do the following:
+
+* add `suppressHydrationWarning` to html element
+* wrap the {children} in `ThemeProvider` with the above attributes
+
+9. Now call the `Navbar.tsx` and add some dummy contents to `page.tsx` to see if it's working or not:
+
+```tsx
+import Navbar from "./components/includes/Navbar";
+
+export default function Home() {
+  return (
+    <section
+      id="main"
+      className="min-h-screen p-20 flex flex-col-reverse items-center justify-center"
+    >
+      <Navbar />
+      <h1 className="text-center mb-20">
+        Lorem ipsum dolor sit amet consectetur adipisicing elit. Facere fugit
+        quam quae in aut odit veniam quaerat, sapiente similique incidunt quis
+        consequatur nulla obcaecati dolorum ipsam enim possimus perspiciatis
+        sit.
+      </h1>
+    </section>
+  );
+}
+```
+
+10. Try clicking on the light/dark mode to see the changes
+
+
+Hope it worked ! 
+
+## Extra Help
+
+check out the github repo to try yourself :
+[next-js-dark-light-mode](https://github.com/masterdevsabith/dark-light-mode)
+
+give this repo a star ⭐ if this helped you !
+
+Again special thanks to [developerAromal](https://github.com/DeveloperAromal) for helping 
