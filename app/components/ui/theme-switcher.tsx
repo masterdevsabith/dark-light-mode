@@ -7,9 +7,9 @@ export const ThemeSwitcher = () => {
   const { setTheme } = useTheme();
 
   return (
-    <>
+    <main className="flex gap-6">
       <button onClick={() => setTheme("light")}>light</button>
       <button onClick={() => setTheme("dark")}>dark</button>
-    </>
+    </main>
   );
 };

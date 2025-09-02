@@ -1,5 +1,6 @@
 @import "tailwindcss";
+@custom-variant dark (&:is(.dark *));
 
 body {
-  @apply bg-white text-black dark:bg-black dark:text-white;
+  @apply bg-white text-black dark:bg-black dark:text-red-800;
 }
